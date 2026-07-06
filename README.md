@@ -1,6 +1,6 @@
 # RAG System — Ask Your Documents, Locally
 
-> Built with learnings from my training internship at TBRL, Ramgarh (DRDO) as a way to actually implement RAG in an isolated environment since the defence sector keeps things isolated for national security. No unauthorized infomation goes in or comes out. 
+> Built with learnings from my training internship at TBRL, Ramgarh (DRDO) as a way to actually implement RAG in an isolated environment since the defence sector keeps things isolated for national security. No unauthorized information goes in or comes out.
 
 ---
 
@@ -12,7 +12,17 @@ It runs entirely on your machine. No cloud. No API keys. No data leaving your ha
 
 There are two pipelines:
 - **Document pipeline** — point it at PDFs, ask questions
-- **Codebase pipeline** — point it at any local repo, ask questions like "where is auth handled?" and get answers with file citations
+- **Codebase pipeline** — paste a GitHub URL or a local path, ask questions like "where is auth handled?" and get answers with file citations
+
+Both are accessible through a clean chat UI — no terminal required after setup.
+
+---
+
+![RAG System UI](./screenshots/ui.png)
+*The Streamlit chat interface — Document Q&A mode (My college course study material PDF)*
+
+![Codebase Assistant](./screenshots/codebase.png)
+*Codebase Assistant answering with source file citations (This repo - v1.1.0)*
 
 ---
 
@@ -22,7 +32,7 @@ Short answer: I'm doing this at a DRDO lab.
 
 Longer answer: TBRL is a defence research establishment. Sensitive documents, internal codebases, research data — none of that goes to OpenAI, Anthropic, or anyone else's servers. Local-first isn't a nice-to-have here, it's a hard requirement.
 
-The machine I'm running this on is an **i7-10750H with 16GB RAM and no dedicated GPU** (Intel UHD 630 doesn't count). So everything here is picked to run on CPU: quantized small models, lightweight embeddings, no CUDA anywhere. It's actually pretty usable once you get past the "but what about a GPU" instinct. The only thing you'd need is some patience so you give the model some time to think *using your CPU* before answering. There are other models recommended for everyone with stronger hardware. ✌🏻
+The machine I'm running this on is an **i7-10750H with 16GB RAM and no dedicated GPU** (My Intel UHD 630 doesn't count). So everything here is picked to run on CPU: quantized small models, lightweight embeddings, no CUDA anywhere. It's actually pretty usable once you get past the "but what about a GPU" instinct. The only thing you'd need is some patience so you give the model some time to think *using your CPU* before answering. There are other models recommended for everyone with stronger hardware. ✌🏻
 
 ---
 
@@ -51,6 +61,7 @@ That's it. The LLM never "reads" the whole document — it only sees the relevan
 | PDF parsing | PyMuPDF | Fast, handles messy PDFs well |
 | Code chunking | LangChain + Language splitters | Splits at function/class boundaries |
 | Orchestration | LangChain LCEL | Clean chain composition |
+| UI | Streamlit | Fast to build, runs in browser |
 | Package manager | uv | Faster than pip, proper lockfile |
 
 ---
@@ -60,6 +71,7 @@ That's it. The LLM never "reads" the whole document — it only sees the relevan
 - [Ollama](https://ollama.com) installed and running
 - Python 3.11+
 - [uv](https://astral.sh/uv)
+- Git (for GitHub URL ingestion)
 
 ```bash
 ollama pull phi3:mini
@@ -78,9 +90,19 @@ uv sync
 
 ---
 
-## Usage:
+## Usage
 
-### 1. Document Q&A
+### UI (recommended)
+
+```bash
+uv run streamlit run app.py
+```
+
+Opens in your browser. Pick a mode from the sidebar, ingest your source, start asking.
+
+### CLI
+
+#### Document Q&A
 
 ```bash
 # Drop PDFs into ./data/, then:
@@ -88,17 +110,33 @@ uv run python ingest.py
 uv run python retrieve.py "What are the key findings in section 3?"
 ```
 
-### 2. Codebase Assistant
+#### Codebase Assistant
 
 ```bash
-# Clone any repo locally first, then point at it:
+# Local path:
+uv run python ingest_code.py ./some-repo
+
+# OR clone manually first:
 git clone https://github.com/someone/some-repo.git
 uv run python ingest_code.py ./some-repo
+
 uv run python ask_code.py "how does authentication work here?"
 uv run python ask_code.py "where does the database connection get initialized?"
 ```
 
 Answers come with source file citations — not just "somewhere in the code."
+
+---
+
+## GitHub URL Ingestion
+
+In the UI, you can paste a GitHub URL directly into the Codebase Assistant sidebar instead of a local path. Here's what happens under the hood:
+
+1. The repo gets cloned with `--depth=1` (no git history, just the files — keeps it fast)
+2. Ingestion runs against the cloned folder
+3. The clone gets deleted — only the vector store is kept
+
+Your disk stays clean, ChromaDB keeps everything it needs.
 
 ---
 
@@ -119,16 +157,24 @@ Answers come with source file citations — not just "somewhere in the code."
 rag-system/
 ├── data/               # PDFs go here (gitignored)
 ├── chroma_db/          # Persistent vector store (gitignored)
+├── screenshots/        # UI screenshots for this README
 ├── ingest.py           # PDF ingestion pipeline
 ├── retrieve.py         # PDF retrieval + Q&A
 ├── ingest_code.py      # Codebase ingestion pipeline
 ├── ask_code.py         # Codebase Q&A with file citations
+├── app.py              # Streamlit UI
 └── pyproject.toml      # Dependencies (managed with uv)
 ```
 
 ---
 
 ## Version History
+
+### v1.2.0
+- Streamlit chat UI — both pipelines accessible from the browser
+- GitHub URL ingestion — paste a repo URL, it clones, indexes, and cleans up automatically
+- Chat history persists across questions within a session
+- PDF upload directly from the browser (no manual file dropping)
 
 ### v1.1.0
 - Codebase assistant with language-aware chunking
@@ -147,3 +193,31 @@ rag-system/
 ## Context
 
 This started as a learning project during my internship at **TBRL, Ramgarh** — a DRDO establishment. The goal was to understand RAG architecture hands-on rather than just reading about it. The CPU-only, local-first constraints turned out to be a good forcing function: you learn a lot more about what actually matters when you can't just throw GPU money at the problem.
+
+---
+
+## Hardware Guide — What to Run
+
+Not everyone has the same machine. Here's a quick cheat sheet.
+
+| Tier | Specs | LLM | Embeddings | Notes |
+|---|---|---|---|---|
+| Potato | i3 10th gen, 8GB RAM | `tinyllama:1.1b` | `nomic-embed-text` | Slow but works. Close other apps. |
+| This repo's default | i7 10th gen, 16GB RAM, no dGPU | `phi3:mini` | `nomic-embed-text` | Comfortable. ~5-10s per answer. |
+| Mid-range laptop GPU | RTX 4050 6GB / RX 6600M | `llama3.2:3b` or `mistral:7b` | `nomic-embed-text` | GPU handles inference, much faster. |
+| Decent gaming laptop/PC | RTX 4060 8GB+ | `llama3.1:8b` | `nomic-embed-text` | The sweet spot. Fast, smart, local. |
+| You have money | RTX 4090 / 3090 24GB | `llama3.1:70b` (Q4) | `nomic-embed-text` | Basically GPT-4 quality, at home. |
+
+```bash
+# swap in any model name — ollama handles the rest
+ollama pull tinyllama        # ~600MB
+ollama pull phi3:mini        # ~2.3GB  ← default here
+ollama pull llama3.2:3b      # ~2GB
+ollama pull mistral:7b       # ~4.1GB
+ollama pull llama3.1:8b      # ~4.7GB
+ollama pull llama3.1:70b     # ~40GB, don't do this on 16GB RAM
+```
+
+To switch models, change `LLM_MODEL` in `retrieve.py`, `ask_code.py`, or `app.py`. One line change.
+
+> **dGPU users:** Ollama auto-detects your GPU via CUDA (NVIDIA) or ROCm (AMD). You don't need to configure anything — if the drivers are installed, it just uses the GPU.

@@ -18,10 +18,13 @@ Both are accessible through a clean chat UI — no terminal required after setup
 
 ---
 
-![RAG System UI](./screenshots/ui.png)
+
+<img width="1920" height="960" alt="image" src="https://github.com/user-attachments/assets/ddfb5e8f-5fae-472c-8e51-f30962bfbc03" />
+
 *The Streamlit chat interface — Document Q&A mode (My college course study material PDF)*
 
-![Codebase Assistant](./screenshots/codebase.png)
+<img width="1920" height="961" alt="image" src="https://github.com/user-attachments/assets/2f9cca2e-2595-4675-a32c-cd9b1760796a" />
+
 *Codebase Assistant answering with source file citations (This repo - v1.1.0)*
 
 ---

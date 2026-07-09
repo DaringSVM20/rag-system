@@ -1,4 +1,4 @@
-# RAG System — Ask Your Documents, Locally
+# RAG—X: Ask Your Documents, Locally
 
 > Built with learnings from my training internship at TBRL, Ramgarh (DRDO) as a way to actually implement RAG in an isolated environment since the defence sector keeps things isolated for national security. No unauthorized information goes in or comes out.
 
@@ -18,14 +18,13 @@ Both are accessible through a clean chat UI — no terminal required after setup
 
 ---
 
+<!-- SCREENSHOT: Full UI overview — dark slate theme, RAG—X header, sidebar visible -->
+![alt text](./screenshots/image-1.png)
+*RAG—X — Document Q&A mode*
 
-<img width="1920" height="960" alt="image" src="https://github.com/user-attachments/assets/ddfb5e8f-5fae-472c-8e51-f30962bfbc03" />
-
-*The Streamlit chat interface — Document Q&A mode (My college course study material PDF)*
-
-<img width="1920" height="961" alt="image" src="https://github.com/user-attachments/assets/2f9cca2e-2595-4675-a32c-cd9b1760796a" />
-
-*Codebase Assistant answering with source file citations (This repo - v1.1.0)*
+<!-- SCREENSHOT: Codebase mode — 2-column layout with source canvas on the right -->
+![alt text](./screenshots/image.png)
+*Codebase Assistant with source canvas and file citations*
 
 ---
 
@@ -143,14 +142,33 @@ Your disk stays clean, ChromaDB keeps everything it needs.
 
 ---
 
+## Named Collections
+
+Every ingest creates a named collection in ChromaDB — derived automatically from the source:
+
+- PDF upload → named after the filename (`lecture-notes`, `thesis+2`)
+- GitHub URL → named after the repo (`langchain`, `rag-system`)
+- Local path → named after the folder
+
+A dropdown in the sidebar lets you switch between collections mid-session. You can have your study material, a work codebase, and a GitHub repo all indexed at the same time and switch between them instantly.
+
+---
+
 ## Tuning
 
-| Parameter | File | Default | Effect |
-|---|---|---|---|
-| `chunk_size` | ingest.py / ingest_code.py | 800 | Tokens per chunk |
-| `chunk_overlap` | ingest.py / ingest_code.py | 100 | Context preserved at chunk boundaries |
-| `k` | retrieve.py / ask_code.py | 4–5 | Chunks retrieved per query |
-| `temperature` | retrieve.py / ask_code.py | 0 | 0 = factual, higher = creative |
+The UI exposes these directly via sliders in the sidebar — no file editing needed:
+
+| Parameter | Default | Effect |
+|---|---|---|
+| Temperature | 0.0 | 0 = factual, 1 = creative |
+| Chunks retrieved (k) | 4–5 | More chunks = more context, slower response |
+
+For chunk size and overlap, edit `ingest.py` / `ingest_code.py` directly:
+
+| Parameter | Default | Effect |
+|---|---|---|
+| `chunk_size` | 800 | Tokens per chunk |
+| `chunk_overlap` | 100 | Context preserved at chunk boundaries |
 
 ---
 
@@ -160,42 +178,14 @@ Your disk stays clean, ChromaDB keeps everything it needs.
 rag-system/
 ├── data/               # PDFs go here (gitignored)
 ├── chroma_db/          # Persistent vector store (gitignored)
-├── screenshots/        # UI screenshots for this README
 ├── ingest.py           # PDF ingestion pipeline
 ├── retrieve.py         # PDF retrieval + Q&A
 ├── ingest_code.py      # Codebase ingestion pipeline
 ├── ask_code.py         # Codebase Q&A with file citations
+├── styles.py           # All UI CSS — slate/steel theme
 ├── app.py              # Streamlit UI
 └── pyproject.toml      # Dependencies (managed with uv)
 ```
-
----
-
-## Version History
-
-### v1.2.0
-- Streamlit chat UI — both pipelines accessible from the browser
-- GitHub URL ingestion — paste a repo URL, it clones, indexes, and cleans up automatically
-- Chat history persists across questions within a session
-- PDF upload directly from the browser (no manual file dropping)
-
-### v1.1.0
-- Codebase assistant with language-aware chunking
-- Source file citations in every answer
-- Supports Python, JS, TS, Go, Rust, Java, C, C++, Ruby, HTML, Markdown
-- Separate ChromaDB collection — both pipelines coexist
-
-### v1.0.0
-- PDF ingestion pipeline
-- ChromaDB vector storage
-- Local LLM retrieval via Ollama
-- LCEL chain
-
----
-
-## Context
-
-This started as a learning project during my internship at **TBRL, Ramgarh** — a DRDO establishment. The goal was to understand RAG architecture hands-on rather than just reading about it. The CPU-only, local-first constraints turned out to be a good forcing function: you learn a lot more about what actually matters when you can't just throw GPU money at the problem.
 
 ---
 
@@ -221,6 +211,27 @@ ollama pull llama3.1:8b      # ~4.7GB
 ollama pull llama3.1:70b     # ~40GB, don't do this on 16GB RAM
 ```
 
-To switch models, change `LLM_MODEL` in `retrieve.py`, `ask_code.py`, or `app.py`. One line change.
+To switch models, change `LLM_MODEL` in `retrieve.py` and `ask_code.py`. One line each.
 
-> **dGPU users:** Ollama auto-detects your GPU via CUDA (NVIDIA) or ROCm (AMD). You don't need to configure anything — if the drivers are installed, it just uses the GPU.
+> **dGPU users:** Ollama auto-detects your GPU via CUDA (NVIDIA) or ROCm (AMD). No configuration needed — if the drivers are installed, it just uses the GPU.
+
+---
+
+## Version History
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full history.
+
+### Latest: v1.4.0
+- Full UI overhaul — "Slate & Steel" dark theme
+- Streamlit chrome removed (header, footer, hamburger)
+- RAG—X sticky header with live Ollama connection indicator
+- Source citations rendered as file chips with expandable chunk viewer
+- Codebase mode: side-by-side artifacts canvas showing retrieved source files
+- Temperature and k controls exposed as sidebar sliders
+- `st.status` ingestion feedback replacing plain spinners
+
+---
+
+## Context
+
+This started as a learning project during my internship at **TBRL, Ramgarh** — a DRDO establishment. The goal was to understand RAG architecture hands-on rather than just reading about it. The CPU-only, local-first constraints turned out to be a good forcing function: you learn a lot more about what actually matters when you can't just throw GPU money at the problem.

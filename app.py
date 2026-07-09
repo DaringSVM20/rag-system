@@ -82,9 +82,7 @@ if question:
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            chain = pdf_chain() if mode == "Document Q&A" else code_chain()
-            answer = chain.invoke(question)
-        st.markdown(answer)
+        chain = pdf_chain() if mode == "Document Q&A" else code_chain()
+        answer = st.write_stream(chain.stream(question))
 
     st.session_state.history.append({"role": "assistant", "content": answer})

@@ -8,7 +8,6 @@ from langchain_core.runnables import RunnablePassthrough
 CHROMA_PATH = "./chroma_db"
 EMBED_MODEL = "nomic-embed-text"
 LLM_MODEL = "phi3:mini"
-COLLECTION = "codebase"
 
 PROMPT_TEMPLATE = """
 You are a senior engineer helping a developer understand a codebase.
@@ -30,12 +29,12 @@ def format_docs(docs):
     )
 
 
-def build_chain():
+def build_chain(collection_name: str = "codebase"):
     embeddings = OllamaEmbeddings(model=EMBED_MODEL)
     db = Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embeddings,
-        collection_name=COLLECTION,
+        collection_name=collection_name,
     )
     retriever = db.as_retriever(search_kwargs={"k": 5})
     llm = ChatOllama(model=LLM_MODEL, temperature=0)

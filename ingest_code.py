@@ -7,9 +7,7 @@ from langchain_chroma import Chroma
 
 CHROMA_PATH = "./chroma_db"
 EMBED_MODEL = "nomic-embed-text"
-COLLECTION = "codebase"
 
-# Maps extension → LangChain Language enum
 LANGUAGE_MAP = {
     ".py":   Language.PYTHON,
     ".js":   Language.JS,
@@ -58,12 +56,11 @@ def split_documents(docs: list[Document]) -> list[Document]:
             chunk_size=800,
             chunk_overlap=100,
         )
-        for chunk in splitter.split_documents([doc]):
-            chunks.append(chunk)
+        chunks.extend(splitter.split_documents([doc]))
     return chunks
 
 
-def ingest(repo_path: str):
+def ingest(repo_path: str, collection_name: str = "codebase"):
     docs = load_code_files(repo_path)
     if not docs:
         print(f"No supported code files found in {repo_path}")
@@ -78,11 +75,12 @@ def ingest(repo_path: str):
         documents=chunks,
         embedding=embeddings,
         persist_directory=CHROMA_PATH,
-        collection_name=COLLECTION,
+        collection_name=collection_name,
     )
-    print(f"Stored {db._collection.count()} chunks in collection '{COLLECTION}'.")
+    print(f"Stored {db._collection.count()} chunks in '{collection_name}'.")
 
 
 if __name__ == "__main__":
     path = sys.argv[1] if len(sys.argv) > 1 else "."
-    ingest(path)
+    name = sys.argv[2] if len(sys.argv) > 2 else Path(path).name
+    ingest(path, name)

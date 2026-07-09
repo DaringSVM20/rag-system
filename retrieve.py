@@ -1,6 +1,4 @@
-# retrieve.py
-# Loads ChromaDB, retrieves relevant chunks, sends to local LLM.
-
+import sys
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
@@ -24,27 +22,20 @@ Answer:"""
 
 
 def format_docs(docs: list) -> str:
-    # Joins retrieved chunks into one string block for the prompt.
     return "\n\n---\n\n".join(doc.page_content for doc in docs)
 
 
-def build_chain():
+def build_chain(collection_name: str = "documents"):
     embeddings = OllamaEmbeddings(model=EMBED_MODEL)
     db = Chroma(
         persist_directory=CHROMA_PATH,
         embedding_function=embeddings,
-        collection_name="documents",
+        collection_name=collection_name,
     )
-
-    # k=4: retrieve top 4 most similar chunks. Tune up for broader context,
-    # down for precision (and fewer hallucination opportunities).
     retriever = db.as_retriever(search_kwargs={"k": 4})
-
     llm = ChatOllama(model=LLM_MODEL, temperature=0)
     prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
 
-    # LangChain Expression Language (LCEL) chain:
-    # question → retriever fetches docs → format → into prompt → LLM → parse
     chain = (
         {"context": retriever | format_docs, "question": RunnablePassthrough()}
         | prompt
@@ -54,13 +45,7 @@ def build_chain():
     return chain
 
 
-def ask(question: str) -> str:
-    chain = build_chain()
-    return chain.invoke(question)
-
-
 if __name__ == "__main__":
-    import sys
-    question = " ".join(sys.argv[1:]) or "Summarize the main topics in these documents."
+    question = " ".join(sys.argv[1:]) or "Summarize the main topics."
     print(f"\nQ: {question}\n")
-    print(ask(question))
+    print(build_chain().invoke(question))

@@ -19,11 +19,13 @@ Both are accessible through a clean chat UI — no terminal required after setup
 ---
 
 <!-- SCREENSHOT: Full UI overview — dark slate theme, RAG—X header, sidebar visible -->
-![alt text](./screenshots/image-1.png)
+<img width="1920" height="995" alt="image" src="https://github.com/user-attachments/assets/50b8186b-aed7-4219-be85-b822fd249b3a" />
+
 *RAG—X — Document Q&A mode*
 
 <!-- SCREENSHOT: Codebase mode — 2-column layout with source canvas on the right -->
-![alt text](./screenshots/image.png)
+<img width="1920" height="994" alt="image" src="https://github.com/user-attachments/assets/d2a1938a-9a26-48e7-988c-af152b937412" />
+
 *Codebase Assistant with source canvas and file citations*
 
 ---
